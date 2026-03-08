@@ -25,17 +25,28 @@ const INITIAL_TOPICS = [
   "人生で一度はやってみたいことは？",
 ];
 
+const INITIAL_MEMBERS = [
+  "山田 太郎",
+  "佐藤 花子",
+  "鈴木 一郎",
+  "高橋 美咲",
+  "田中 健太",
+  "伊藤 さくら"
+];
+
 type DrawnItem = {
-  cardNumber: number;
+  member: string;
   topic: string;
 };
 
 export default function Home() {
-  const [maxParticipants, setMaxParticipants] = useState<number>(20);
+  const [membersText, setMembersText] = useState<string>(INITIAL_MEMBERS.join('\n'));
   const [drawnList, setDrawnList] = useState<DrawnItem[]>([]);
   const [currentItem, setCurrentItem] = useState<DrawnItem | null>(null);
   const [availableTopics, setAvailableTopics] = useState<string[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
+
+  const membersList = membersText.split('\n').map(m => m.trim()).filter(m => m !== '');
 
   useEffect(() => {
     // Initialize topics
@@ -52,14 +63,13 @@ export default function Home() {
   };
 
   const drawRandom = () => {
-    if (isDrawing) return;
+    if (isDrawing || membersList.length === 0) return;
 
-    // Remaining numbers based on maxParticipants
-    const allNumbers = Array.from({ length: maxParticipants }, (_, i) => i + 1);
-    const drawnNumbers = drawnList.map((d) => d.cardNumber);
-    const remainingNumbers = allNumbers.filter((n) => !drawnNumbers.includes(n));
+    // Remaining members based on current input and drawnList
+    const drawnMembers = drawnList.map((d) => d.member);
+    const remainingMembers = membersList.filter((m) => !drawnMembers.includes(m));
 
-    if (remainingNumbers.length === 0) {
+    if (remainingMembers.length === 0) {
       alert("全員引き終わりました！");
       return;
     }
@@ -67,9 +77,9 @@ export default function Home() {
     setIsDrawing(true);
     setCurrentItem(null); // trigger fade animation again
 
-    // Get random number
-    const randomIdx = Math.floor(Math.random() * remainingNumbers.length);
-    const resultNumber = remainingNumbers[randomIdx];
+    // Get random member
+    const randomIdx = Math.floor(Math.random() * remainingMembers.length);
+    const resultMember = remainingMembers[randomIdx];
 
     // Get topic (replenish if empty)
     let currentTopics = [...availableTopics];
@@ -80,7 +90,7 @@ export default function Home() {
     setAvailableTopics(currentTopics);
 
     setTimeout(() => {
-      const newItem = { cardNumber: resultNumber, topic: resultTopic };
+      const newItem = { member: resultMember, topic: resultTopic };
       setCurrentItem(newItem);
       setDrawnList([...drawnList, newItem]);
       setIsDrawing(false);
@@ -95,8 +105,8 @@ export default function Home() {
     }
   };
 
-  const handleManualDraw = (num: number) => {
-    if (isDrawing || drawnList.some((d) => d.cardNumber === num)) return;
+  const handleManualDraw = (member: string) => {
+    if (isDrawing || drawnList.some((d) => d.member === member)) return;
 
     setIsDrawing(true);
     setCurrentItem(null);
@@ -109,12 +119,14 @@ export default function Home() {
     setAvailableTopics(currentTopics);
 
     setTimeout(() => {
-      const newItem = { cardNumber: num, topic: resultTopic };
+      const newItem = { member: member, topic: resultTopic };
       setCurrentItem(newItem);
       setDrawnList([...drawnList, newItem]);
       setIsDrawing(false);
     }, 400);
   };
+
+  const remainingCount = membersList.length - drawnList.length;
 
   return (
     <>
@@ -129,21 +141,23 @@ export default function Home() {
 
         <div className="main-content">
           <section className="card glass-panel animate-fade-in" style={{ animationDelay: "0.1s" }}>
-            <div className="top-controls">
-              <div className="control-group">
-                <label htmlFor="maxNumber">参加人数 (くじの数)</label>
-                <input 
-                  id="maxNumber"
-                  type="number" 
-                  min="1" 
-                  max="100" 
-                  value={maxParticipants}
-                  onChange={(e) => setMaxParticipants(Math.max(1, parseInt(e.target.value) || 1))}
+            <div className="top-controls" style={{ alignItems: 'flex-start' }}>
+              <div className="control-group" style={{ flex: 1 }}>
+                <label htmlFor="membersInput">参加メンバー (1行に1名)</label>
+                <textarea 
+                  id="membersInput"
+                  value={membersText}
+                  onChange={(e) => {
+                    setMembersText(e.target.value);
+                    // Handle case where a member is removed while selected
+                  }}
                   className="input-field"
-                  style={{ width: '150px' }}
+                  rows={4}
+                  style={{ resize: 'vertical', width: '100%', minHeight: '100px' }}
+                  placeholder="山田 太郎&#10;佐藤 花子"
                 />
               </div>
-              <button className="btn-secondary" onClick={handleReset}>
+              <button className="btn-secondary" onClick={handleReset} style={{ marginTop: '1.5rem' }}>
                 リセット
               </button>
             </div>
@@ -152,8 +166,10 @@ export default function Home() {
           <section className="card glass-panel animate-fade-in" style={{ animationDelay: "0.2s", flex: 1 }}>
             <div className="result-display">
               {currentItem ? (
-                <div key={currentItem.cardNumber} className="animate-pop-in">
-                  <div className="result-number text-gradient">{currentItem.cardNumber} 番</div>
+                <div key={currentItem.member} className="animate-pop-in">
+                  <div className="result-number text-gradient" style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>
+                    {currentItem.member} <span style={{ fontSize: '1.5rem', color: 'var(--text-light)' }}>さん</span>
+                  </div>
                   <div className="result-topic">{currentItem.topic}</div>
                 </div>
               ) : (
@@ -169,7 +185,7 @@ export default function Home() {
               <button 
                 className="btn-primary" 
                 onClick={drawRandom}
-                disabled={isDrawing || drawnList.length >= maxParticipants}
+                disabled={isDrawing || remainingCount <= 0 || membersList.length === 0}
                 style={{ fontSize: '1.25rem', padding: '16px 32px' }}
               >
                 ランダムに引く！
@@ -178,22 +194,24 @@ export default function Home() {
           </section>
 
           <section className="card glass-panel animate-fade-in" style={{ animationDelay: "0.3s" }}>
-            <h2 className="card-title">くじの状況 ({drawnList.length}/{maxParticipants})</h2>
-            <div className="grid-numbers">
-              {Array.from({ length: maxParticipants }, (_, i) => i + 1).map((num) => {
-                const isDrawn = drawnList.some((d) => d.cardNumber === num);
-                const isActive = currentItem?.cardNumber === num;
+            <h2 className="card-title">メンバー状況 ({drawnList.length}/{membersList.length})</h2>
+            <div className="grid-numbers" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))' }}>
+              {membersList.map((member, index) => {
+                const isDrawn = drawnList.some((d) => d.member === member);
+                const isActive = currentItem?.member === member;
                 let btnClass = "number-chip";
                 if (isActive) btnClass += " active animate-pop-in";
                 else if (isDrawn) btnClass += " used";
 
                 return (
                   <div 
-                    key={num} 
+                    key={`${index}-${member}`} 
                     className={btnClass}
-                    onClick={() => !isDrawn && handleManualDraw(num)}
+                    onClick={() => !isDrawn && handleManualDraw(member)}
+                    title={member}
+                    style={{ padding: '1rem', fontSize: '1rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                   >
-                    {num}
+                    {member}
                   </div>
                 );
               })}
