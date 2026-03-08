@@ -58,6 +58,7 @@ const INITIAL_MEMBERS = [
 type DrawnItem = {
   member: string;
   topic: string;
+  category: string;
 };
 
 export default function Home() {
@@ -129,9 +130,9 @@ export default function Home() {
     }
   };
 
-  const startDrawProcess = (resultMember: string, resultTopic: string) => {
+  const startDrawProcess = (resultMember: string, resultTopic: string, category: string) => {
     setTimeout(() => {
-      const newItem = { member: resultMember, topic: resultTopic };
+      const newItem = { member: resultMember, topic: resultTopic, category };
       setCurrentItem(newItem);
       setDrawnList(prev => [...prev, newItem]);
       setIsDrawing(false);
@@ -170,7 +171,10 @@ export default function Home() {
     const resultTopic = currentTopics.pop() || "自由に自己紹介してください！";
     setAvailableTopics(currentTopics);
 
-    startDrawProcess(resultMember, resultTopic);
+    // Find the category this topic belongs to to log it correctly
+    const drawnTopicCategory = TOPIC_CATEGORIES["仕事"].includes(resultTopic) ? "仕事" : "プライベート";
+
+    startDrawProcess(resultMember, resultTopic, drawnTopicCategory);
   };
 
   const handleReset = () => {
@@ -196,7 +200,10 @@ export default function Home() {
     const resultTopic = currentTopics.pop() || "自由に自己紹介してください！";
     setAvailableTopics(currentTopics);
 
-    startDrawProcess(member, resultTopic);
+    // Find the category this topic belongs to to log it correctly
+    const drawnTopicCategory = TOPIC_CATEGORIES["仕事"].includes(resultTopic) ? "仕事" : "プライベート";
+
+    startDrawProcess(member, resultTopic, drawnTopicCategory);
   };
 
   const remainingCount = membersList.length - drawnList.length;
@@ -316,6 +323,21 @@ export default function Home() {
                     リセット
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* Category Display */}
+            {currentItem && (
+              <div 
+                className="animate-pop-in"
+                style={{ 
+                position: 'absolute', top: '1rem', left: '1.5rem', 
+                background: currentItem.category === '仕事' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(236, 72, 153, 0.2)', 
+                border: `1px solid ${currentItem.category === '仕事' ? 'var(--primary-color)' : 'var(--secondary-color)'}`,
+                padding: '0.4rem 1rem', borderRadius: '20px',
+                fontSize: '0.85rem', fontWeight: 'bold', letterSpacing: '0.05em'
+              }}>
+                {currentItem.category}
               </div>
             )}
 
