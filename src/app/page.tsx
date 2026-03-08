@@ -68,6 +68,7 @@ export default function Home() {
   const [isDrawing, setIsDrawing] = useState(false);
   
   const [selectedCategory, setSelectedCategory] = useState<CategoryType>("すべて");
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
 
   // Timer states
   const [timerDuration, setTimerDuration] = useState<number>(60); // in seconds
@@ -224,9 +225,12 @@ export default function Home() {
               <div className="control-group" style={{ flex: '1 1 300px' }}>
                 <label htmlFor="membersInput">
                   参加メンバー (1行に1名)
-                  <span className="info-icon">
+                  <span 
+                    className="info-icon"
+                    onClick={() => setIsTooltipVisible(!isTooltipVisible)}
+                  >
                     i
-                    <span className="tooltip">参加メンバーに合わせてリストを更新してください</span>
+                    <span className={`tooltip ${isTooltipVisible ? 'visible' : ''}`}>参加メンバーに合わせてリストを更新してください</span>
                   </span>
                 </label>
                 <textarea 

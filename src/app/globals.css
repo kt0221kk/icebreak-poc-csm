@@ -293,7 +293,7 @@ body {
   border-color: var(--glass-border) transparent transparent transparent;
 }
 
-.info-icon:hover .tooltip {
+.tooltip.visible {
   visibility: visible;
   opacity: 1;
 }
