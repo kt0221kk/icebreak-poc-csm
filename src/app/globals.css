@@ -234,6 +234,68 @@ body {
 .control-group label {
   font-size: 0.9rem;
   color: var(--text-dim);
+  display: flex;
+  align-items: center;
+}
+
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: rgba(99, 102, 241, 0.2);
+  border: 1px solid var(--primary-color);
+  color: var(--text-light);
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin-left: 0.5rem;
+  cursor: help;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.info-icon:hover {
+  background-color: var(--primary-color);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+
+.tooltip {
+  visibility: hidden;
+  opacity: 0;
+  width: 220px;
+  background-color: var(--bg-base);
+  color: var(--text-light);
+  text-align: left;
+  border-radius: 8px;
+  padding: 0.75rem;
+  position: absolute;
+  z-index: 10;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  font-size: 0.8rem;
+  font-weight: normal;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+.tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--glass-border) transparent transparent transparent;
+}
+
+.info-icon:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
 }
 
 .grid-numbers {

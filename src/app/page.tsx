@@ -173,7 +173,7 @@ export default function Home() {
   };
 
   const handleReset = () => {
-    if (confirm("本当にリセットしますか？")) {
+    if (confirm("進行状況（これまでに引いたくじとタイマー）をリセットしますか？\n※参加メンバーのリストは保持されます")) {
       setDrawnList([]);
       setCurrentItem(null);
       setIsTimerRunning(false);
@@ -222,7 +222,13 @@ export default function Home() {
           <section className="card glass-panel animate-fade-in" style={{ animationDelay: "0.1s" }}>
             <div className="top-controls" style={{ alignItems: 'flex-start', flexWrap: 'wrap' }}>
               <div className="control-group" style={{ flex: '1 1 300px' }}>
-                <label htmlFor="membersInput">参加メンバー (1行に1名)</label>
+                <label htmlFor="membersInput">
+                  参加メンバー (1行に1名)
+                  <span className="info-icon">
+                    i
+                    <span className="tooltip">参加メンバーに合わせてリストを更新してください</span>
+                  </span>
+                </label>
                 <textarea 
                   id="membersInput"
                   value={membersText}
@@ -275,7 +281,7 @@ export default function Home() {
               </div>
               
               <button className="btn-secondary" onClick={handleReset} style={{ marginTop: '1.5rem', alignSelf: 'flex-end' }}>
-                全てリセット
+                進行状況をリセット
               </button>
             </div>
           </section>
