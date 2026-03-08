@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const INITIAL_TOPICS = [
   "最近買ってよかったものは？",
@@ -45,13 +45,38 @@ export default function Home() {
   const [currentItem, setCurrentItem] = useState<DrawnItem | null>(null);
   const [availableTopics, setAvailableTopics] = useState<string[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
-
+  
+  // Timer states
+  const [timerDuration, setTimerDuration] = useState<number>(60); // in seconds
+  const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
+  
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const membersList = membersText.split('\n').map(m => m.trim()).filter(m => m !== '');
 
   useEffect(() => {
     // Initialize topics
     setAvailableTopics(shuffleArray([...INITIAL_TOPICS]));
   }, []);
+
+  // Timer effect
+  useEffect(() => {
+    if (isTimerRunning && timeRemaining > 0) {
+      timerRef.current = setTimeout(() => {
+        setTimeRemaining(prev => prev - 1);
+      }, 1000);
+    } else if (timeRemaining === 0 && isTimerRunning) {
+      setIsTimerRunning(false);
+      // Optional: Play sound or visual alert when time is up
+      if (currentItem) {
+        alert("時間が終了しました！");
+      }
+    }
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [timeRemaining, isTimerRunning, currentItem]);
 
   const shuffleArray = (array: string[]) => {
     const newArr = [...array];
@@ -60,6 +85,30 @@ export default function Home() {
       [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
     }
     return newArr;
+  };
+
+  const resetTimer = () => {
+    setIsTimerRunning(false);
+    setTimeRemaining(timerDuration);
+  };
+
+  const toggleTimer = () => {
+    if (timeRemaining > 0) {
+      setIsTimerRunning(!isTimerRunning);
+    }
+  };
+
+  const startDrawProcess = (resultMember: string, resultTopic: string) => {
+    setTimeout(() => {
+      const newItem = { member: resultMember, topic: resultTopic };
+      setCurrentItem(newItem);
+      setDrawnList(prev => [...prev, newItem]);
+      setIsDrawing(false);
+      
+      // Auto-start timer when new topic is drawn
+      setTimeRemaining(timerDuration);
+      setIsTimerRunning(true);
+    }, 400); // Wait for animation
   };
 
   const drawRandom = () => {
@@ -75,7 +124,8 @@ export default function Home() {
     }
 
     setIsDrawing(true);
-    setCurrentItem(null); // trigger fade animation again
+    setCurrentItem(null);
+    setIsTimerRunning(false);
 
     // Get random member
     const randomIdx = Math.floor(Math.random() * remainingMembers.length);
@@ -89,18 +139,14 @@ export default function Home() {
     const resultTopic = currentTopics.pop() || "自由に自己紹介してください！";
     setAvailableTopics(currentTopics);
 
-    setTimeout(() => {
-      const newItem = { member: resultMember, topic: resultTopic };
-      setCurrentItem(newItem);
-      setDrawnList([...drawnList, newItem]);
-      setIsDrawing(false);
-    }, 400); // Wait for animation
+    startDrawProcess(resultMember, resultTopic);
   };
 
   const handleReset = () => {
     if (confirm("本当にリセットしますか？")) {
       setDrawnList([]);
       setCurrentItem(null);
+      setIsTimerRunning(false);
       setAvailableTopics(shuffleArray([...INITIAL_TOPICS]));
     }
   };
@@ -110,6 +156,7 @@ export default function Home() {
 
     setIsDrawing(true);
     setCurrentItem(null);
+    setIsTimerRunning(false);
 
     let currentTopics = [...availableTopics];
     if (currentTopics.length === 0) {
@@ -118,15 +165,17 @@ export default function Home() {
     const resultTopic = currentTopics.pop() || "自由に自己紹介してください！";
     setAvailableTopics(currentTopics);
 
-    setTimeout(() => {
-      const newItem = { member: member, topic: resultTopic };
-      setCurrentItem(newItem);
-      setDrawnList([...drawnList, newItem]);
-      setIsDrawing(false);
-    }, 400);
+    startDrawProcess(member, resultTopic);
   };
 
   const remainingCount = membersList.length - drawnList.length;
+  
+  // Format MM:SS
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
 
   return (
     <>
@@ -141,30 +190,74 @@ export default function Home() {
 
         <div className="main-content">
           <section className="card glass-panel animate-fade-in" style={{ animationDelay: "0.1s" }}>
-            <div className="top-controls" style={{ alignItems: 'flex-start' }}>
-              <div className="control-group" style={{ flex: 1 }}>
+            <div className="top-controls" style={{ alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <div className="control-group" style={{ flex: '1 1 300px' }}>
                 <label htmlFor="membersInput">参加メンバー (1行に1名)</label>
                 <textarea 
                   id="membersInput"
                   value={membersText}
-                  onChange={(e) => {
-                    setMembersText(e.target.value);
-                    // Handle case where a member is removed while selected
-                  }}
+                  onChange={(e) => setMembersText(e.target.value)}
                   className="input-field"
                   rows={4}
-                  style={{ resize: 'vertical', width: '100%', minHeight: '100px' }}
+                  style={{ resize: 'vertical', width: '100%', minHeight: '80px' }}
                   placeholder="山田 太郎&#10;佐藤 花子"
                 />
               </div>
-              <button className="btn-secondary" onClick={handleReset} style={{ marginTop: '1.5rem' }}>
-                リセット
+              
+              <div className="control-group" style={{ width: '150px' }}>
+                <label htmlFor="timerSettings">持ち時間 (秒)</label>
+                <input 
+                  id="timerSettings"
+                  type="number"
+                  min="10"
+                  max="600"
+                  step="10"
+                  value={timerDuration}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 60;
+                    setTimerDuration(val);
+                    if (!isTimerRunning) setTimeRemaining(val);
+                  }}
+                  className="input-field"
+                />
+              </div>
+              
+              <button className="btn-secondary" onClick={handleReset} style={{ marginTop: '1.5rem', alignSelf: 'flex-end' }}>
+                全てリセット
               </button>
             </div>
           </section>
 
-          <section className="card glass-panel animate-fade-in" style={{ animationDelay: "0.2s", flex: 1 }}>
-            <div className="result-display">
+          <section className="card glass-panel animate-fade-in" style={{ animationDelay: "0.2s", flex: 1, position: 'relative' }}>
+            
+            {/* Timer Display over Result block */}
+            {currentItem && (
+              <div style={{ 
+                position: 'absolute', top: '1rem', right: '1.5rem', 
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                background: 'rgba(0,0,0,0.3)', padding: '0.75rem 1rem', borderRadius: '12px',
+                border: `1px solid ${timeRemaining <= 10 ? 'var(--secondary-color)' : 'var(--glass-border)'}`,
+                boxShadow: timeRemaining <= 10 ? '0 0 15px rgba(236, 72, 153, 0.4)' : 'none',
+                transition: 'all 0.3s'
+              }}>
+                <div style={{ 
+                  fontSize: '2rem', fontWeight: 800, fontFamily: 'var(--font-geist-mono), monospace',
+                  color: timeRemaining <= 10 ? 'var(--secondary-color)' : 'var(--text-light)'
+                }}>
+                  {formatTime(timeRemaining)}
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  <button onClick={toggleTimer} className="btn-secondary" style={{ padding: '4px 12px', fontSize: '0.8rem' }}>
+                    {isTimerRunning ? "一時停止" : timeRemaining === 0 ? "終了" : "再開"}
+                  </button>
+                  <button onClick={resetTimer} className="btn-secondary" style={{ padding: '4px 12px', fontSize: '0.8rem' }}>
+                    リセット
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="result-display" style={{ paddingTop: currentItem ? '4rem' : '3rem' }}>
               {currentItem ? (
                 <div key={currentItem.member} className="animate-pop-in">
                   <div className="result-number text-gradient" style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>
