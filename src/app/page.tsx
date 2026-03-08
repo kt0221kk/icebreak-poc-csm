@@ -352,9 +352,15 @@ export default function Home() {
                   <div 
                     key={`${index}-${member}`} 
                     className={btnClass}
-                    onClick={() => !isDrawn && handleManualDraw(member)}
                     title={member}
-                    style={{ padding: '1rem', fontSize: '1rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                    style={{ 
+                      padding: '1rem', 
+                      fontSize: '1rem', 
+                      overflow: 'hidden', 
+                      textOverflow: 'ellipsis', 
+                      whiteSpace: 'nowrap',
+                      cursor: isDrawn || isActive ? 'default' : 'default' // Remove pointer cursor
+                    }}
                   >
                     {member}
                   </div>
