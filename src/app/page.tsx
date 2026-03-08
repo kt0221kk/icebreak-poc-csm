@@ -2,28 +2,49 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-const INITIAL_TOPICS = [
-  "最近買ってよかったものは？",
-  "今週末の予定は？",
-  "最近見た映画やアニメは？",
-  "100万円あったら何に使う？",
-  "実は誰にも言っていない秘密は？",
-  "好きな食べ物とその理由は？",
-  "これまでで一番の失敗談は？",
-  "最近ハマっている趣味は？",
-  "生まれ変わるなら何になりたい？",
-  "もし超能力が一つ使えるなら？",
-  "学生時代の一番の思い出は？",
-  "尊敬している人とその理由は？",
-  "自分を動物に例えると？",
-  "最近あったプチハッピーな出来事は？",
-  "もし明日世界が終わるなら何をする？",
-  "絶対に外せないストレス解消法は？",
-  "子どもの頃の夢は何だった？",
-  "旅行先で一番良かったところは？",
-  "自分だけの小さなこだわりは？",
-  "人生で一度はやってみたいことは？",
-];
+const TOPIC_CATEGORIES = {
+  "プライベート": [
+    "最近買ってよかったものは？",
+    "今週末の予定は？",
+    "最近見た映画やアニメは？",
+    "100万円あったら何に使う？",
+    "実は誰にも言っていない秘密は？",
+    "好きな食べ物とその理由は？",
+    "これまでで一番の失敗談は？",
+    "最近ハマっている趣味は？",
+    "生まれ変わるなら何になりたい？",
+    "もし超能力が一つ使えるなら？",
+    "学生時代の一番の思い出は？",
+    "尊敬している人とその理由は？",
+    "自分を動物に例えると？",
+    "最近あったプチハッピーな出来事は？",
+    "もし明日世界が終わるなら何をする？",
+    "絶対に外せないストレス解消法は？",
+    "子どもの頃の夢は何だった？",
+    "旅行先で一番良かったところは？",
+    "自分だけの小さなこだわりは？",
+    "人生で一度はやってみたいことは？",
+  ],
+  "仕事": [
+    "最近仕事で面白かった発見は？",
+    "入社した頃の自分に一つだけアドバイスするなら？",
+    "もし今の仕事をしていなかったら、どんな職業に就いていたと思う？",
+    "仕事でいちばんテンションが上がる瞬間は？",
+    "最近新しく覚えたスキルや知識は？",
+    "チームメンバーの意外な一面を発見したエピソードは？",
+    "「これは自分の隠れた才能かも？」と思う業務は？",
+    "仕事中に欠かせない飲み物やおやつは？",
+    "リモートワーク（またはオフィスワーク）の好きなところは？",
+    "もし自分が会社の新しい制度を作るなら、どんな制度にする？",
+    "最近感謝したいチームのメンバーとその理由は？",
+    "過去の仕事で一番「焦った！」瞬間は？（今だから言える話）",
+    "仕事のやる気を出すためのマイルーティンは？",
+    "これから仕事で挑戦してみたい領域は？",
+    "今のチームのここが好き！というポイントは？",
+  ]
+};
+
+type CategoryType = "すべて" | "プライベート" | "仕事";
 
 const INITIAL_MEMBERS = [
   "山田 太郎",
@@ -46,6 +67,8 @@ export default function Home() {
   const [availableTopics, setAvailableTopics] = useState<string[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
   
+  const [selectedCategory, setSelectedCategory] = useState<CategoryType>("すべて");
+
   // Timer states
   const [timerDuration, setTimerDuration] = useState<number>(60); // in seconds
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
@@ -54,10 +77,17 @@ export default function Home() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const membersList = membersText.split('\n').map(m => m.trim()).filter(m => m !== '');
 
+  const getTopicsByCategory = (category: CategoryType) => {
+    if (category === "すべて") {
+      return [...TOPIC_CATEGORIES["プライベート"], ...TOPIC_CATEGORIES["仕事"]];
+    }
+    return [...TOPIC_CATEGORIES[category]];
+  };
+
   useEffect(() => {
-    // Initialize topics
-    setAvailableTopics(shuffleArray([...INITIAL_TOPICS]));
-  }, []);
+    // Initialize topics based on category
+    setAvailableTopics(shuffleArray(getTopicsByCategory(selectedCategory)));
+  }, [selectedCategory]);
 
   // Timer effect
   useEffect(() => {
@@ -134,7 +164,7 @@ export default function Home() {
     // Get topic (replenish if empty)
     let currentTopics = [...availableTopics];
     if (currentTopics.length === 0) {
-      currentTopics = shuffleArray([...INITIAL_TOPICS]);
+      currentTopics = shuffleArray(getTopicsByCategory(selectedCategory));
     }
     const resultTopic = currentTopics.pop() || "自由に自己紹介してください！";
     setAvailableTopics(currentTopics);
@@ -147,7 +177,7 @@ export default function Home() {
       setDrawnList([]);
       setCurrentItem(null);
       setIsTimerRunning(false);
-      setAvailableTopics(shuffleArray([...INITIAL_TOPICS]));
+      setAvailableTopics(shuffleArray(getTopicsByCategory(selectedCategory)));
     }
   };
 
@@ -160,7 +190,7 @@ export default function Home() {
 
     let currentTopics = [...availableTopics];
     if (currentTopics.length === 0) {
-      currentTopics = shuffleArray([...INITIAL_TOPICS]);
+      currentTopics = shuffleArray(getTopicsByCategory(selectedCategory));
     }
     const resultTopic = currentTopics.pop() || "自由に自己紹介してください！";
     setAvailableTopics(currentTopics);
@@ -204,22 +234,44 @@ export default function Home() {
                 />
               </div>
               
-              <div className="control-group" style={{ width: '150px' }}>
-                <label htmlFor="timerSettings">持ち時間 (秒)</label>
-                <input 
-                  id="timerSettings"
-                  type="number"
-                  min="10"
-                  max="600"
-                  step="10"
-                  value={timerDuration}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 60;
-                    setTimerDuration(val);
-                    if (!isTimerRunning) setTimeRemaining(val);
-                  }}
-                  className="input-field"
-                />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="control-group" style={{ width: '150px' }}>
+                  <label htmlFor="timerSettings">持ち時間 (秒)</label>
+                  <input 
+                    id="timerSettings"
+                    type="number"
+                    min="10"
+                    max="600"
+                    step="10"
+                    value={timerDuration}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 60;
+                      setTimerDuration(val);
+                      if (!isTimerRunning) setTimeRemaining(val);
+                    }}
+                    className="input-field"
+                  />
+                </div>
+                
+                <div className="control-group" style={{ width: '150px' }}>
+                  <label htmlFor="categorySelect">方向性 (テーマ)</label>
+                  <div style={{ position: 'relative' }}>
+                    <select
+                      id="categorySelect"
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value as CategoryType)}
+                      className="input-field"
+                      style={{ width: '100%', appearance: 'none', cursor: 'pointer' }}
+                    >
+                      <option value="すべて">すべて (共通)</option>
+                      <option value="仕事">仕事の話題</option>
+                      <option value="プライベート">プライベート</option>
+                    </select>
+                    <div style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                      ▼
+                    </div>
+                  </div>
+                </div>
               </div>
               
               <button className="btn-secondary" onClick={handleReset} style={{ marginTop: '1.5rem', alignSelf: 'flex-end' }}>
